@@ -41,8 +41,11 @@ export default class MyContentComponent extends React.Component<any, any> {
 
                     {/* Redirect: 路由重定向：將 /GG919，Redirect 到 /poem2 */}
                     <Redirect from='/GG919' to='/poem2' />
-                    {/* 萬用路由 */}
-                    <Route component={NoMatch} />
+                    
+                    {/* 萬用路由 1: 轉導到 /homePage */}
+                    {/* <Redirect from='*' to='/homePage' /> */}
+                    {/* 萬用路由 2: 直接開 NoMatch 元件 */}
+                    <Route path="*" component={NoMatch} />
                 </Switch>
             </div>
 
