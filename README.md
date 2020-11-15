@@ -11,6 +11,18 @@ https://ucamc.com/e-learning/javascript/278-%E7%B0%A1%E5%96%AE%E4%BB%8B%E7%B4%B9
 # 調整 create-react-app 的 npm start port
 https://stackoverflow.com/questions/40714583/how-to-specify-a-port-to-run-a-create-react-app-based-project
 
+# [7天學會ReactJS] Day 7. 取得商品資訊 — Fetch
+https://medium.com/reactmaker/7%E5%A4%A9%E5%AD%B8%E6%9C%83reactjs-day-7-%E5%91%BC%E5%8F%ABapi%E5%8F%96%E5%BE%97%E5%95%86%E5%93%81%E8%B3%87%E8%A8%8A-8896c9dae339
+
+# Promise API 教學
+https://wcc723.github.io/development/2020/02/16/all-new-promise/
+
+# 使用 CSS module 
+https://www.html.cn/create-react-app/docs/adding-a-css-modules-stylesheet/
+
+# 一些自己寫-react-的好習慣
+https://medium.com/@as790726/%E4%B8%80%E4%BA%9B%E8%87%AA%E5%B7%B1%E5%AF%AB-react-%E7%9A%84%E5%A5%BD%E7%BF%92%E6%85%A3-lifecycle-method-%E8%B7%9F-state-%E7%AE%A1%E7%90%86-b37a12da968b
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
