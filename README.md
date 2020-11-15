@@ -23,6 +23,9 @@ https://www.html.cn/create-react-app/docs/adding-a-css-modules-stylesheet/
 # 一些自己寫-react-的好習慣
 https://medium.com/@as790726/%E4%B8%80%E4%BA%9B%E8%87%AA%E5%B7%B1%E5%AF%AB-react-%E7%9A%84%E5%A5%BD%E7%BF%92%E6%85%A3-lifecycle-method-%E8%B7%9F-state-%E7%AE%A1%E7%90%86-b37a12da968b
 
+# ReactJS 各式 input 輸入
+https://zh-hant.reactjs.org/docs/forms.html
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
