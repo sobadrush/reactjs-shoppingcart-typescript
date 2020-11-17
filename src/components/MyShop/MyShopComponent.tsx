@@ -1,4 +1,4 @@
-import React, { MouseEvent } from 'react'; // ref. https://stackoverflow.com/questions/46524815/react-event-type-in-typescript
+import React, { MouseEvent, ChangeEvent } from 'react'; // ref. https://stackoverflow.com/questions/46524815/react-event-type-in-typescript
 
 import underConstructPic from '../../assets/img/網站維護中.jpg';
 import dataLoadingPic from '../../assets/img/dataLoading.gif';
@@ -17,9 +17,18 @@ interface ProductVO {
 
 export default class MyShopComponent extends React.Component<any, any> {
 
+    private isUpdateBlockShow: boolean = false; // 是否show更新區塊
+
+    // 使用 ref 抓取 DOM
+    private inputProdIdRef: React.RefObject<any>;
+    private inputProdNameRef: React.RefObject<any>;
+    private inputProdPriceRef: React.RefObject<any>;
+    private inputProdQuantityRef: React.RefObject<any>;
+
     constructor(props: any) {
         super(props);
 
+        // 只有在 construct 中可直接用 this.state 對 state 進行操作
         this.state = {
             "products": [],
             "dataForInsert": {
@@ -27,8 +36,18 @@ export default class MyShopComponent extends React.Component<any, any> {
                 "productName": "",
                 "price": "",
                 "quantity": "",
-            }
+            },
+            selectedProdVO: null, // 更新用的
+            // productNameUpdate: "", // 更新用的
+            // productPriceUpdate: "", // 更新用的
+            // productQuantityUpdate: "", // 更新用的
         }
+
+        // 使用Ref抓取DOM (類似 Angular 的 範本參考變數 )
+        this.inputProdIdRef = React.createRef();
+        this.inputProdNameRef = React.createRef();
+        this.inputProdPriceRef = React.createRef();
+        this.inputProdQuantityRef = React.createRef();
     }
 
     componentDidMount() {
@@ -91,7 +110,7 @@ export default class MyShopComponent extends React.Component<any, any> {
             if (res.ok === true) {
                 alert('INSERT SUCCESS!')
                 this.setState({
-                    "products": [ ...this.state.products, this.state.dataForInsert], // ES6 解構
+                    "products": [...this.state.products, this.state.dataForInsert], // ES6 解構
                     "dataForInsert": {
                         "id": undefined,
                         "productName": "",
@@ -163,12 +182,114 @@ export default class MyShopComponent extends React.Component<any, any> {
     }
 
     /**
-     * 更新商品
+     * 顯示 更新商品 輸入框
      */
-    doUpdate = (e: MouseEvent<HTMLButtonElement>) => {
-        alert("doUpdate");
-        console.log("doUpdate event >>>", e);
-        let btnTag = e.target;
+    doUpdateStep1 = (productId: number) => {
+        console.log("doUpdateStep1 productId = ", productId);
+        // --------------------------------------------------------------------------
+        // find : 回傳第一個滿足條件的物件
+        let selectedProdVO = this.state.products.find((prodVO: ProductVO) => {
+            return prodVO.id == productId;
+        });
+        // console.log("selectedProdVO >>>", selectedProdVO);
+
+        this.setState({
+            "selectedProdVO": selectedProdVO
+        }, () => {
+            // 避免setState非同步無法正確印出資料，將console.log寫在第2個參數
+            console.log("this.state.selectedProdVO ", this.state.selectedProdVO);
+        })
+
+        // --------------------------------------------------------------------------
+        this.isUpdateBlockShow = true; // 顯示 更新區塊
+        this.forceUpdate(); // 使用 class level 的變數→不會觸發Re-Render，必須強制刷新
+    }
+
+    /**
+     * 更新區 - input 標籤 的 onChange
+     */
+    updateHandler = (e: ChangeEvent) => {
+        let targetInputTag = e.target as HTMLInputElement;
+        console.log("targetInputTag.name >>> ", targetInputTag.name);
+
+        switch (targetInputTag.name) {
+            case "productName":
+                this.setState({
+                    "selectedProdVO": {
+                        [targetInputTag.name]: targetInputTag.value, // productName
+                        "price": this.state.selectedProdVO.price,
+                        "quantity": this.state.selectedProdVO.quantity
+                    }
+                });
+                break;
+            case "price":
+                this.setState({
+                    "selectedProdVO": {
+                        "productName": this.state.selectedProdVO.productName,
+                        [targetInputTag.name]: targetInputTag.value, // price
+                        "quantity": this.state.selectedProdVO.quantity
+                    }
+                });
+                break;
+            case "quantity":
+                this.setState({
+                    "selectedProdVO": {
+                        "productName": this.state.selectedProdVO.productName,
+                        "price": this.state.selectedProdVO.price,
+                        [targetInputTag.name]: targetInputTag.value // quantity
+                    }
+                });
+                break;
+        }
+
+        // 延遲一下，避免 setState 非同步造成console.log無法正確顯示
+        setTimeout(() => {
+            console.log("#######", this.state.selectedProdVO);
+        }, 200)
+
+    }
+
+    /**
+     * 確定 更新商品
+     */
+    doUpdateStep2 = (e: MouseEvent<HTMLButtonElement>) => {
+        // alert("doUpdateStep2");
+        // console.log("doUpdateStep2 event >>>", e);
+        console.log("doUpdateStep2 >>> ", this.state.selectedProdVO); // 可以這樣取得要更新的資料，此處故意練習使用 Ref 抓 DOM
+
+        console.log("this.inputProdIdRef >>> ", this.inputProdIdRef);
+        console.log("this.inputProdNameRef >>> ", this.inputProdNameRef);
+        console.log("this.inputProdPriceRef >>> ", this.inputProdPriceRef);
+        console.log("this.inputProdQuantityRef >>> ", this.inputProdQuantityRef);
+
+        let pId = this.inputProdIdRef.current.value;
+        let pName = this.inputProdNameRef.current.value;
+        let pPrice = this.inputProdPriceRef.current.value;
+        let pQuantity = this.inputProdQuantityRef.current.value;
+
+        console.log("[pId, pName, pPrice, pQuantity] = ", [pId, pName, pPrice, pQuantity]);
+
+        let fetchUrl = `http://localhost:3007/products/${pId}`;
+        fetch(fetchUrl, {
+            method: "PATCH", // 更新
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            },
+            body: JSON.stringify({
+                "productName": pName,
+                "price": pPrice,
+                "quantity": pQuantity,
+            }),
+        }).then(res => res.json)
+        .then(json => {
+            console.log("After Patch : ", json);
+        }).catch((err) => {
+            console.error("err = ", err);
+            alert("ERROR!");
+        }).finally(() => {
+            this.forceUpdate();
+        });
+
     }
 
     // 新增時, Input Change處理
@@ -208,7 +329,6 @@ export default class MyShopComponent extends React.Component<any, any> {
         }
 
         // console.log("this.state.dataForInsert OBJECT : ", this.state.dataForInsert);
-
     }
 
     render(): any {
@@ -220,30 +340,65 @@ export default class MyShopComponent extends React.Component<any, any> {
             myDataBlock =
                 <React.Fragment>
 
+                    {/* 新增區塊 */}
                     <div style={{ margin: '3px', float: 'left', border: "1px solid black", padding: "2px" }} >
                         <label htmlFor="pName">商品名稱</label>&nbsp;
-                        <input type="text" id="pName"
+                        <input type="text" id="pName" name="productName"
                             value={this.state.dataForInsert.productName}
-                            onChange={(e: any) => this.handleChange(e)} /><span>動物森友會</span><br/>
+                            onChange={(e: any) => this.handleChange(e)} /><span>Ex:動物森友會</span><br />
 
                         <label htmlFor="pPrice">商品價格</label>&nbsp;
-                        <input type="text" id="pPrice"
+                        <input type="text" id="pPrice" name="price"
                             value={this.state.dataForInsert.price}
-                            onChange={(e: any) => this.handleChange(e)} /><span>2250</span><br/>
+                            onChange={(e: any) => this.handleChange(e)} /><span>Ex:2250</span><br />
 
                         <label htmlFor="pQuantity">商品庫存</label>&nbsp;
-                        <input type="text" id="pQuantity"
+                        <input type="text" id="pQuantity" name="quantity"
                             value={this.state.dataForInsert.quantity}
-                            onChange={(e: any) => this.handleChange(e)} /><span>9</span><br/>
+                            onChange={(e: any) => this.handleChange(e)} /><span>Ex:9</span><br />
 
                         <button type="button" className="btn btn-success"
                             style={{ margin: '3px', float: 'left' }}
                             onClick={(e) => { this.doInsert() }}>新增</button>
                     </div>
 
+
+                    {/* 更新區塊 */}
+                    ※ this.isUpdateBlockShow = {JSON.stringify(this.isUpdateBlockShow)}
+                    {this.isUpdateBlockShow && /* 模擬NG-IF */
+                        <div style={{ margin: '3px', float: 'left', border: "1px solid black", padding: "2px" }} >
+                            <label htmlFor="pName">商品編號</label>&nbsp;
+                            <input type="text" id="pId" name="id" style={{ background: "lightGray" }} value={this.state.selectedProdVO.id}
+                                ref={this.inputProdIdRef} readOnly /><br />
+
+                            <label htmlFor="pName">商品名稱</label>&nbsp;
+                            <input type="text" id="pName" name="productName" value={this.state.selectedProdVO.productName}
+                                onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
+                                ref={this.inputProdNameRef} /><br />
+
+                            <label htmlFor="pPrice">商品價格</label>&nbsp;
+                            <input type="text" id="pPrice" name="price" value={this.state.selectedProdVO.price}
+                                onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
+                                ref={this.inputProdPriceRef} /><br />
+
+                            <label htmlFor="pQuantity">商品庫存</label>&nbsp;
+                            <input type="text" id="pQuantity" name="quantity" value={this.state.selectedProdVO.quantity}
+                                onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
+                                ref={this.inputProdQuantityRef} /><br />
+
+                            <button type="button" className="btn btn-info"
+                                style={{ margin: '3px', float: 'left' }}
+                                onClick={(e) => { this.doUpdateStep2(e) }}>確定</button>
+
+                            <button type="button" className="btn btn-dark"
+                                style={{ margin: '3px', float: 'left' }}
+                                onClick={() => { this.isUpdateBlockShow = false; this.forceUpdate(); }}>關閉</button>
+                        </div>
+                    }
+
                     <div style={{ margin: '3px', float: 'right' }} >
                         <button type="button" className="btn btn-primary"
-                            style={{ margin: '3px', float: 'right' }}
+                            style={{ margin: '3px', float: 'right', width: '3cm', height: '3cm' }}
                             onClick={(e) => { this.doQuery(e) }}>查詢</button>
                     </div>
 
@@ -275,7 +430,7 @@ export default class MyShopComponent extends React.Component<any, any> {
                                                     onClick={() => this.doDelete(prodVO.id)}>刪除</button>
                                                 <button type="button" className="btn btn-warning" style={{ margin: "2px" }}
                                                     // title={(prodVO.id).toString()}
-                                                    onClick={(e) => this.doUpdate(e)}>修改</button>
+                                                    onClick={(pId) => this.doUpdateStep1(prodVO.id)}>修改</button>
                                             </td>
                                         </tr>);
                                 })

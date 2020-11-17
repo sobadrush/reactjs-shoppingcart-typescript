@@ -5,3 +5,7 @@
 .red{
     color: rgb(73, 5, 231);
 }
+
+.my-readonly{
+    background-color: rgb(145, 142, 172)
+}

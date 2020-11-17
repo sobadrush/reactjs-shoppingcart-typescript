@@ -1,7 +1,7 @@
 
 # 測試
 1. 使用json-server
-$ json-server.cmd -w -p 3007 .\src\database\db.json
+$  json-server.cmd -w -p 3007 ./src/database/db.json
 2. 啟動react專案
 $ npm start (在package.json中修改port為3006)
 
@@ -25,6 +25,13 @@ https://medium.com/@as790726/%E4%B8%80%E4%BA%9B%E8%87%AA%E5%B7%B1%E5%AF%AB-react
 
 # ReactJS 各式 input 輸入
 https://zh-hant.reactjs.org/docs/forms.html
+
+# React Forms 表單處理
+https://www.fooish.com/reactjs/forms.html
+
+# React Refs (類似 Angular 範本參考變數)
+https://medium.com/itsoktomakemistakes/react-ref-api-%E6%80%8E%E9%BA%BC%E7%94%A8-ea1f31cd0a7a
+https://www.fooish.com/reactjs/refs.html
 
 # Getting Started with Create React App
 
