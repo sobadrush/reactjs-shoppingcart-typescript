@@ -5,6 +5,9 @@ $  json-server.cmd -w -p 3007 ./src/database/db.json
 2. 啟動react專案
 $ npm start (在package.json中修改port為3006)
 
+# Fetch API使用教學
+https://www.oxxostudio.tw/articles/201908/js-fetch.html
+
 # React4 Router
 https://ucamc.com/e-learning/javascript/278-%E7%B0%A1%E5%96%AE%E4%BB%8B%E7%B4%B9%E4%BA%86%E8%A7%A3react-router-4%E6%95%99%E5%AD%B8
 

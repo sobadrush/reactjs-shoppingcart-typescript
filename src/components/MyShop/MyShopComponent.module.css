@@ -2,8 +2,11 @@
     border: "5px solid black";
 }
 
-.red{
-    color: rgb(73, 5, 231);
+.myRed{
+    color: rgb(255, 0, 0);
+    font-weight: bolder;
+    font-size: larger;
+    font-style: italic;
 }
 
 .my-readonly{

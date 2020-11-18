@@ -7,6 +7,8 @@ import dataLoadingPic3 from '../../assets/img/dataLoading3.gif';
 
 import myStyles from './MyShopComponent.module.css'
 
+import hotSalePic from '../../assets/img/熱銷.png';
+
 interface ProductVO {
     // {"id":7001,"productName":"聖劍傳說3(重製版)","price":1250,"quantity":20}
     id: number;
@@ -32,15 +34,17 @@ export default class MyShopComponent extends React.Component<any, any> {
         this.state = {
             "products": [],
             "dataForInsert": {
-                "id": undefined,
+                "id": '',
                 "productName": "",
                 "price": "",
                 "quantity": "",
             },
-            selectedProdVO: null, // 更新用的
-            // productNameUpdate: "", // 更新用的
-            // productPriceUpdate: "", // 更新用的
-            // productQuantityUpdate: "", // 更新用的
+            "selectedProdVO": { // 更新用的
+                "id": '',
+                "productName": "",
+                "price": "",
+                "quantity": "",
+            },
         }
 
         // 使用Ref抓取DOM (類似 Angular 的 範本參考變數 )
@@ -169,7 +173,7 @@ export default class MyShopComponent extends React.Component<any, any> {
         fetch(fetchUrl, { method: 'DELETE' })
             .then((res) => {
                 if (res.status === 200 && res.ok === true) {
-                    alert('DELETE SUCCESS!')
+                    alert('DELETE SUCCESS!');
                     this.setState({
                         // "products": this.state.products.filter((item: ProductVO) => { return item.id != productId })
                         "products": this.state.products.filter((item: ProductVO) => item.id !== productId)
@@ -182,7 +186,7 @@ export default class MyShopComponent extends React.Component<any, any> {
     }
 
     /**
-     * 顯示 更新商品 輸入框
+     * 顯示 更新商品 輸入框 ( 並 將選擇的商品資料代入 selectedProdVO )
      */
     doUpdateStep1 = (productId: number) => {
         console.log("doUpdateStep1 productId = ", productId);
@@ -210,12 +214,13 @@ export default class MyShopComponent extends React.Component<any, any> {
      */
     updateHandler = (e: ChangeEvent) => {
         let targetInputTag = e.target as HTMLInputElement;
-        console.log("targetInputTag.name >>> ", targetInputTag.name);
+        console.log("targetInputTag >>> ", targetInputTag);
 
         switch (targetInputTag.name) {
             case "productName":
                 this.setState({
                     "selectedProdVO": {
+                        "id": this.state.selectedProdVO.id,
                         [targetInputTag.name]: targetInputTag.value, // productName
                         "price": this.state.selectedProdVO.price,
                         "quantity": this.state.selectedProdVO.quantity
@@ -225,6 +230,7 @@ export default class MyShopComponent extends React.Component<any, any> {
             case "price":
                 this.setState({
                     "selectedProdVO": {
+                        "id": this.state.selectedProdVO.id,
                         "productName": this.state.selectedProdVO.productName,
                         [targetInputTag.name]: targetInputTag.value, // price
                         "quantity": this.state.selectedProdVO.quantity
@@ -234,6 +240,7 @@ export default class MyShopComponent extends React.Component<any, any> {
             case "quantity":
                 this.setState({
                     "selectedProdVO": {
+                        "id": this.state.selectedProdVO.id,
                         "productName": this.state.selectedProdVO.productName,
                         "price": this.state.selectedProdVO.price,
                         [targetInputTag.name]: targetInputTag.value // quantity
@@ -244,7 +251,7 @@ export default class MyShopComponent extends React.Component<any, any> {
 
         // 延遲一下，避免 setState 非同步造成console.log無法正確顯示
         setTimeout(() => {
-            console.log("#######", this.state.selectedProdVO);
+            console.log("### updateHandler ###", this.state.selectedProdVO);
         }, 200)
 
     }
@@ -255,19 +262,23 @@ export default class MyShopComponent extends React.Component<any, any> {
     doUpdateStep2 = (e: MouseEvent<HTMLButtonElement>) => {
         // alert("doUpdateStep2");
         // console.log("doUpdateStep2 event >>>", e);
-        console.log("doUpdateStep2 >>> ", this.state.selectedProdVO); // 可以這樣取得要更新的資料，此處故意練習使用 Ref 抓 DOM
 
+        
+        console.log("doUpdateStep2 >>> ", this.state.selectedProdVO); // 可以這樣取得要更新的資料，此處故意練習使用 Ref 抓 DOM
+        
         console.log("this.inputProdIdRef >>> ", this.inputProdIdRef);
         console.log("this.inputProdNameRef >>> ", this.inputProdNameRef);
         console.log("this.inputProdPriceRef >>> ", this.inputProdPriceRef);
         console.log("this.inputProdQuantityRef >>> ", this.inputProdQuantityRef);
-
-        let pId = this.inputProdIdRef.current.value;
-        let pName = this.inputProdNameRef.current.value;
-        let pPrice = this.inputProdPriceRef.current.value;
-        let pQuantity = this.inputProdQuantityRef.current.value;
-
+        
+        let pId: number = +this.inputProdIdRef.current.value;
+        let pName: string = this.inputProdNameRef.current.value;
+        let pPrice: number = this.inputProdPriceRef.current.value;
+        let pQuantity: number = this.inputProdQuantityRef.current.value;
+        
         console.log("[pId, pName, pPrice, pQuantity] = ", [pId, pName, pPrice, pQuantity]);
+        
+        if( window.confirm(`確定更新商品編號(${pId})嗎?`) == false ) return;
 
         let fetchUrl = `http://localhost:3007/products/${pId}`;
         fetch(fetchUrl, {
@@ -280,14 +291,45 @@ export default class MyShopComponent extends React.Component<any, any> {
                 "price": pPrice,
                 "quantity": pQuantity,
             }),
-        }).then(res => res.json)
+        })//.then((res: Response) => res.json())
+        .then((res: Response) => {
+            if (res.status === 200 && res.ok === true) {
+                alert('PATCH SUCCESS!');
+
+                let productArrAfterUpdate = this.state.products.map((prodVO: ProductVO) => {
+                    if(prodVO.id === pId){
+                        prodVO.productName = pName;
+                        prodVO.price = pPrice;
+                        prodVO.quantity = pQuantity;
+                    }
+                    return prodVO;
+                });
+                console.log("用map修改物件屬性後 [...this.state.products] >>>", [...this.state.products]);
+                
+                // 觸發 Re-Render
+                this.setState({
+                    "products": productArrAfterUpdate,
+                    "selectedProdVO": { // 更新用的 → 復原
+                        "id": '',
+                        "productName": "",
+                        "price": "",
+                        "quantity": "",
+                    },
+                });
+
+                return res.json(); // 返回 Promise，resolves 是 JSON 物件
+            }
+        })
         .then(json => {
             console.log("After Patch : ", json);
+
+            this.isUpdateBlockShow = false; // 隱藏 更新區塊
+
         }).catch((err) => {
             console.error("err = ", err);
             alert("ERROR!");
         }).finally(() => {
-            this.forceUpdate();
+            this.forceUpdate(); // 無效!!!
         });
 
     }
@@ -368,21 +410,21 @@ export default class MyShopComponent extends React.Component<any, any> {
                     {this.isUpdateBlockShow && /* 模擬NG-IF */
                         <div style={{ margin: '3px', float: 'left', border: "1px solid black", padding: "2px" }} >
                             <label htmlFor="pName">商品編號</label>&nbsp;
-                            <input type="text" id="pId" name="id" style={{ background: "lightGray" }} value={this.state.selectedProdVO.id}
+                            <input type="text" id="pId" name="id" style={{ background: "lightGray" }} defaultValue={this.state.selectedProdVO.id}
                                 ref={this.inputProdIdRef} readOnly /><br />
 
                             <label htmlFor="pName">商品名稱</label>&nbsp;
-                            <input type="text" id="pName" name="productName" value={this.state.selectedProdVO.productName}
+                            <input type="text" id="pName" name="productName" defaultValue={this.state.selectedProdVO.productName}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
                                 ref={this.inputProdNameRef} /><br />
 
                             <label htmlFor="pPrice">商品價格</label>&nbsp;
-                            <input type="text" id="pPrice" name="price" value={this.state.selectedProdVO.price}
+                            <input type="text" id="pPrice" name="price" defaultValue={this.state.selectedProdVO.price}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
                                 ref={this.inputProdPriceRef} /><br />
 
                             <label htmlFor="pQuantity">商品庫存</label>&nbsp;
-                            <input type="text" id="pQuantity" name="quantity" value={this.state.selectedProdVO.quantity}
+                            <input type="text" id="pQuantity" name="quantity" defaultValue={this.state.selectedProdVO.quantity}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
                                 ref={this.inputProdQuantityRef} /><br />
 
@@ -418,12 +460,15 @@ export default class MyShopComponent extends React.Component<any, any> {
                                 this.state?.products.map((prodVO: ProductVO, idx: number) => {
                                     // console.log(`map prodVO` , prodVO);
                                     return (
-                                        <tr key={idx + 1} style={{ background: "lightGray" }}>
-                                            <th scope="row" style={{ border: "2px solid black", textAlign: "center" }}>{idx + 1}</th>
+                                        <tr key={ idx + 1 } style={{ background: "lightGray" }}>
+                                            <th scope="row" style={{ border: "2px solid black", textAlign: "center" }}>{ idx + 1 }</th>
                                             <td style={{ border: "2px solid black" }}>{prodVO.id}</td>
                                             <td style={{ border: "2px solid black" }}>{prodVO.productName}</td>
                                             <td style={{ border: "2px solid black" }}>{prodVO.price + ` NT`}</td>
-                                            <td style={{ border: "2px solid black" }}>{prodVO.quantity}</td>
+                                            <td style={{ border: "2px solid black" }} className={ (prodVO.quantity < 10) ? myStyles.myRed : "" }>
+                                                { prodVO.quantity }
+                                                { prodVO.quantity < 10 ? <img src={ hotSalePic } alt="熱銷.png" width="60px"/> : null }
+                                            </td>
                                             <td style={{ border: "2px solid black" }}>
                                                 <button type="button" className="btn btn-danger" style={{ margin: "2px" }}
                                                     // title={(prodVO.id).toString()}
@@ -443,7 +488,7 @@ export default class MyShopComponent extends React.Component<any, any> {
         return (
             <div>
                 <h1>MyShopComponent</h1>
-                <div className={myStyles.red} style={{ margin: "3px" }}>測試使用css module</div>
+                <div className={myStyles.myRed} style={{ margin: "3px" }}>測試使用css module</div>
                 <hr />
                 <h5>this.state.dataForInsert</h5>
                 <textarea rows={4} cols={50} value={JSON.stringify(this.state.dataForInsert)} readOnly></textarea>
