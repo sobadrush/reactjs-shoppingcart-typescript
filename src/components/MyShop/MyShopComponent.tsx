@@ -5,11 +5,13 @@ import dataLoadingPic from '../../assets/img/dataLoading.gif';
 import dataLoadingPic2 from '../../assets/img/dataLoading2.gif';
 import dataLoadingPic3 from '../../assets/img/dataLoading3.gif';
 
-import myStyles from './MyShopComponent.module.css'
+import myStyles from './MyShopComponent.module.css';
 
 import hotSalePic from '../../assets/img/熱銷.png';
 
-interface ProductVO {
+import { MyItem } from '../MyProductItem/MyItem';
+
+export interface ProductVO {
     // {"id":7001,"productName":"聖劍傳說3(重製版)","price":1250,"quantity":20}
     id: number;
     productName: string;
@@ -174,10 +176,43 @@ export default class MyShopComponent extends React.Component<any, any> {
             .then((res) => {
                 if (res.status === 200 && res.ok === true) {
                     alert('DELETE SUCCESS!');
+
+                    // 異動 state → 觸發 Render
                     this.setState({
                         // "products": this.state.products.filter((item: ProductVO) => { return item.id != productId })
                         "products": this.state.products.filter((item: ProductVO) => item.id !== productId)
                     });
+                    
+                }
+            }).catch((err) => {
+                console.error("err = ", err);
+                alert("ERROR!");
+            });
+    }
+
+    /**
+    * 刪除商品 - 透過 props 傳給 <MyItem> 元件
+    * 說明: dataFromChild : 子元件 emit 過來的資料
+    */
+    doDeleteFromChild = (dataFromChild: any) => {
+        alert(" === doDeleteFromChild === ");
+        console.log("doDeleteFromChild dataFromChild is: ", dataFromChild);
+
+        let productWantToDelete = dataFromChild.itemWantToDelete;
+
+        let fetchUrl = `http://localhost:3007/products/${productWantToDelete.id}`;
+        fetch(fetchUrl, { method: 'DELETE' })
+            .then((res) => {
+                if (res.status === 200 && res.ok === true) {
+                    alert('DELETE SUCCESS!');
+
+                    // 異動 state → 觸發 Render
+                    this.setState({
+                        "products": this.state.products.filter((prodVO: ProductVO) => {
+                            return prodVO.id != dataFromChild.itemWantToDelete.id
+                        })
+                    });
+
                 }
             }).catch((err) => {
                 console.error("err = ", err);
@@ -196,7 +231,7 @@ export default class MyShopComponent extends React.Component<any, any> {
             return prodVO.id == productId;
         });
         // console.log("theSelectedProdVO >>>", theSelectedProdVO);
-        
+
         let { id: tmpId, productName: tmpProductName, price: tmpPrice, quantity: tmpQuantity } = theSelectedProdVO; // 解構 - 並給變數重新命名
         // console.log(" theSelectedProdVO.id >>>", tmpId);
         // console.log(" theSelectedProdVO.productName >>>", tmpProductName);
@@ -273,22 +308,22 @@ export default class MyShopComponent extends React.Component<any, any> {
         // alert("doUpdateStep2");
         // console.log("doUpdateStep2 event >>>", e);
 
-        
+
         console.log("doUpdateStep2 >>> ", this.state.selectedProdVO); // 可以這樣取得要更新的資料，此處故意練習使用 Ref 抓 DOM
-        
+
         console.log("this.inputProdIdRef >>> ", this.inputProdIdRef);
         console.log("this.inputProdNameRef >>> ", this.inputProdNameRef);
         console.log("this.inputProdPriceRef >>> ", this.inputProdPriceRef);
         console.log("this.inputProdQuantityRef >>> ", this.inputProdQuantityRef);
-        
+
         let pId: number = +this.inputProdIdRef.current.value;
         let pName: string = this.inputProdNameRef.current.value;
         let pPrice: number = this.inputProdPriceRef.current.value;
         let pQuantity: number = this.inputProdQuantityRef.current.value;
-        
+
         console.log("[pId, pName, pPrice, pQuantity] = ", [pId, pName, pPrice, pQuantity]);
-        
-        if( window.confirm(`確定更新商品編號(${pId})嗎?`) == false ) return;
+
+        if (window.confirm(`確定更新商品編號(${pId})嗎?`) == false) return;
 
         let fetchUrl = `http://localhost:3007/products/${pId}`;
         fetch(fetchUrl, {
@@ -302,45 +337,45 @@ export default class MyShopComponent extends React.Component<any, any> {
                 "quantity": pQuantity,
             }),
         })//.then((res: Response) => res.json())
-        .then((res: Response) => {
-            if (res.status === 200 && res.ok === true) {
-                alert('PATCH SUCCESS!');
+            .then((res: Response) => {
+                if (res.status === 200 && res.ok === true) {
+                    alert('PATCH SUCCESS!');
 
-                let productArrAfterUpdate = this.state.products.map((prodVO: ProductVO) => {
-                    if(prodVO.id === pId){
-                        prodVO.productName = pName;
-                        prodVO.price = pPrice;
-                        prodVO.quantity = pQuantity;
-                    }
-                    return prodVO;
-                });
-                console.log("用map修改物件屬性後 [...this.state.products] >>>", [...this.state.products]);
-                
-                // 觸發 Re-Render
-                this.setState({
-                    "products": productArrAfterUpdate,
-                    "selectedProdVO": { // 更新用的 → 復原
-                        "id": '',
-                        "productName": "",
-                        "price": "",
-                        "quantity": "",
-                    },
-                });
+                    let productArrAfterUpdate = this.state.products.map((prodVO: ProductVO) => {
+                        if (prodVO.id === pId) {
+                            prodVO.productName = pName;
+                            prodVO.price = pPrice;
+                            prodVO.quantity = pQuantity;
+                        }
+                        return prodVO;
+                    });
+                    console.log("用map修改物件屬性後 [...this.state.products] >>>", [...this.state.products]);
 
-                return res.json(); // 返回 Promise，resolves 是 JSON 物件
-            }
-        })
-        .then(json => {
-            console.log("After Patch : ", json);
+                    // 觸發 Re-Render
+                    this.setState({
+                        "products": productArrAfterUpdate,
+                        "selectedProdVO": { // 更新用的 → 復原
+                            "id": '',
+                            "productName": "",
+                            "price": "",
+                            "quantity": "",
+                        },
+                    });
 
-            this.isUpdateBlockShow = false; // 隱藏 更新區塊
+                    return res.json(); // 返回 Promise，resolves 是 JSON 物件
+                }
+            })
+            .then(json => {
+                console.log("After Patch : ", json);
 
-        }).catch((err) => {
-            console.error("err = ", err);
-            alert("ERROR!");
-        }).finally(() => {
-            this.forceUpdate(); // 無效!!!
-        });
+                this.isUpdateBlockShow = false; // 隱藏 更新區塊
+
+            }).catch((err) => {
+                console.error("err = ", err);
+                alert("ERROR!");
+            }).finally(() => {
+                this.forceUpdate(); // 無效!!!
+            });
 
     }
 
@@ -420,27 +455,27 @@ export default class MyShopComponent extends React.Component<any, any> {
                     {this.isUpdateBlockShow && /* 模擬NG-IF */
                         <div style={{ margin: '3px', float: 'left', border: "1px solid black", padding: "2px" }} >
                             <label htmlFor="pName">商品編號</label>&nbsp;
-                            <input type="text" id="pId" name="id" style={{ background: "lightGray" }} 
+                            <input type="text" id="pId" name="id" style={{ background: "lightGray" }}
                                 // defaultValue={this.state.selectedProdVO.id}
                                 value={this.state.selectedProdVO.id}
                                 ref={this.inputProdIdRef} readOnly /><br />
 
                             <label htmlFor="pName">商品名稱</label>&nbsp;
-                            <input type="text" id="pName" name="productName" 
+                            <input type="text" id="pName" name="productName"
                                 // defaultValue={this.state.selectedProdVO.productName}
                                 value={this.state.selectedProdVO.productName}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
                                 ref={this.inputProdNameRef} /><br />
 
                             <label htmlFor="pPrice">商品價格</label>&nbsp;
-                            <input type="text" id="pPrice" name="price" 
+                            <input type="text" id="pPrice" name="price"
                                 // defaultValue={this.state.selectedProdVO.price}
                                 value={this.state.selectedProdVO.price}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
                                 ref={this.inputProdPriceRef} /><br />
 
                             <label htmlFor="pQuantity">商品庫存</label>&nbsp;
-                            <input type="text" id="pQuantity" name="quantity" 
+                            <input type="text" id="pQuantity" name="quantity"
                                 // defaultValue={this.state.selectedProdVO.quantity}
                                 value={this.state.selectedProdVO.quantity}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
@@ -476,26 +511,33 @@ export default class MyShopComponent extends React.Component<any, any> {
                         <tbody>
                             {
                                 this.state?.products.map((prodVO: ProductVO, idx: number) => {
-                                    // console.log(`map prodVO` , prodVO);
+
                                     return (
-                                        <tr key={ idx + 1 } style={{ background: "lightGray" }}>
-                                            <th scope="row" style={{ border: "2px solid black", textAlign: "center" }}>{ idx + 1 }</th>
-                                            <td style={{ border: "2px solid black" }}>{prodVO.id}</td>
-                                            <td style={{ border: "2px solid black" }}>{prodVO.productName}</td>
-                                            <td style={{ border: "2px solid black" }}>{prodVO.price + ` NT`}</td>
-                                            <td style={{ border: "2px solid black" }} className={ (prodVO.quantity < 10) ? myStyles.myRed : "" }>
-                                                { prodVO.quantity }
-                                                { prodVO.quantity < 10 ? <img src={ hotSalePic } alt="熱銷.png" width="60px"/> : null }
-                                            </td>
-                                            <td style={{ border: "2px solid black" }}>
-                                                <button type="button" className="btn btn-danger" style={{ margin: "2px" }}
-                                                    // title={(prodVO.id).toString()}
-                                                    onClick={() => this.doDelete(prodVO.id)}>刪除</button>
-                                                <button type="button" className="btn btn-warning" style={{ margin: "2px" }}
-                                                    // title={(prodVO.id).toString()}
-                                                    onClick={(pId) => this.doUpdateStep1(prodVO.id)}>修改</button>
-                                            </td>
-                                        </tr>);
+                                        <MyItem productData={{ idx, ...prodVO }}
+                                            doDeleteFromChildProps={(dataFromChild: any) => this.doDeleteFromChild(dataFromChild)}
+                                        />
+                                    );
+
+                                    // console.log(`map prodVO` , prodVO);
+                                    // return (
+                                    //     <tr key={ idx + 1 } style={{ background: "lightGray" }}>
+                                    //         <th scope="row" style={{ border: "2px solid black", textAlign: "center" }}>{ idx + 1 }</th>
+                                    //         <td style={{ border: "2px solid black" }}>{prodVO.id}</td>
+                                    //         <td style={{ border: "2px solid black" }}>{prodVO.productName}</td>
+                                    //         <td style={{ border: "2px solid black" }}>{prodVO.price + ` NT`}</td>
+                                    //         <td style={{ border: "2px solid black" }} className={ (prodVO.quantity < 10) ? myStyles.myRed : "" }>
+                                    //             { prodVO.quantity }
+                                    //             { prodVO.quantity < 10 ? <img src={ hotSalePic } alt="熱銷.png" width="60px"/> : null }
+                                    //         </td>
+                                    //         <td style={{ border: "2px solid black" }}>
+                                    //             <button type="button" className="btn btn-danger" style={{ margin: "2px" }}
+                                    //                 // title={(prodVO.id).toString()}
+                                    //                 onClick={() => this.doDelete(prodVO.id)}>刪除</button>
+                                    //             <button type="button" className="btn btn-warning" style={{ margin: "2px" }}
+                                    //                 // title={(prodVO.id).toString()}
+                                    //                 onClick={(pId) => this.doUpdateStep1(prodVO.id)}>修改</button>
+                                    //         </td>
+                                    //     </tr>);
                                 })
                             }
                         </tbody>
