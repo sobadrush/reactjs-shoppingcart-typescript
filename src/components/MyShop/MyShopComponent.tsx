@@ -192,21 +192,31 @@ export default class MyShopComponent extends React.Component<any, any> {
         console.log("doUpdateStep1 productId = ", productId);
         // --------------------------------------------------------------------------
         // find : 回傳第一個滿足條件的物件
-        let selectedProdVO = this.state.products.find((prodVO: ProductVO) => {
+        let theSelectedProdVO = this.state.products.find((prodVO: ProductVO) => {
             return prodVO.id == productId;
         });
-        // console.log("selectedProdVO >>>", selectedProdVO);
+        // console.log("theSelectedProdVO >>>", theSelectedProdVO);
+        
+        let { id: tmpId, productName: tmpProductName, price: tmpPrice, quantity: tmpQuantity } = theSelectedProdVO; // 解構 - 並給變數重新命名
+        // console.log(" theSelectedProdVO.id >>>", tmpId);
+        // console.log(" theSelectedProdVO.productName >>>", tmpProductName);
+        // console.log(" theSelectedProdVO.price >>>", tmpPrice);
+        // console.log(" theSelectedProdVO.quantity >>>", tmpQuantity);
 
         this.setState({
-            "selectedProdVO": selectedProdVO
+            "selectedProdVO": { // 更新用的
+                "id": tmpId,
+                "productName": tmpProductName,
+                "price": tmpPrice,
+                "quantity": tmpQuantity,
+            },
         }, () => {
             // 避免setState非同步無法正確印出資料，將console.log寫在第2個參數
             console.log("this.state.selectedProdVO ", this.state.selectedProdVO);
+            this.isUpdateBlockShow = true; // 顯示 更新區塊
+            this.forceUpdate(); // 使用 class level 的變數→不會觸發Re-Render，必須強制刷新
         })
-
         // --------------------------------------------------------------------------
-        this.isUpdateBlockShow = true; // 顯示 更新區塊
-        this.forceUpdate(); // 使用 class level 的變數→不會觸發Re-Render，必須強制刷新
     }
 
     /**
@@ -410,21 +420,29 @@ export default class MyShopComponent extends React.Component<any, any> {
                     {this.isUpdateBlockShow && /* 模擬NG-IF */
                         <div style={{ margin: '3px', float: 'left', border: "1px solid black", padding: "2px" }} >
                             <label htmlFor="pName">商品編號</label>&nbsp;
-                            <input type="text" id="pId" name="id" style={{ background: "lightGray" }} defaultValue={this.state.selectedProdVO.id}
+                            <input type="text" id="pId" name="id" style={{ background: "lightGray" }} 
+                                // defaultValue={this.state.selectedProdVO.id}
+                                value={this.state.selectedProdVO.id}
                                 ref={this.inputProdIdRef} readOnly /><br />
 
                             <label htmlFor="pName">商品名稱</label>&nbsp;
-                            <input type="text" id="pName" name="productName" defaultValue={this.state.selectedProdVO.productName}
+                            <input type="text" id="pName" name="productName" 
+                                // defaultValue={this.state.selectedProdVO.productName}
+                                value={this.state.selectedProdVO.productName}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
                                 ref={this.inputProdNameRef} /><br />
 
                             <label htmlFor="pPrice">商品價格</label>&nbsp;
-                            <input type="text" id="pPrice" name="price" defaultValue={this.state.selectedProdVO.price}
+                            <input type="text" id="pPrice" name="price" 
+                                // defaultValue={this.state.selectedProdVO.price}
+                                value={this.state.selectedProdVO.price}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
                                 ref={this.inputProdPriceRef} /><br />
 
                             <label htmlFor="pQuantity">商品庫存</label>&nbsp;
-                            <input type="text" id="pQuantity" name="quantity" defaultValue={this.state.selectedProdVO.quantity}
+                            <input type="text" id="pQuantity" name="quantity" 
+                                // defaultValue={this.state.selectedProdVO.quantity}
+                                value={this.state.selectedProdVO.quantity}
                                 onChange={(e: ChangeEvent) => { this.updateHandler(e) }}
                                 ref={this.inputProdQuantityRef} /><br />
 

@@ -36,6 +36,9 @@ https://www.fooish.com/reactjs/forms.html
 https://medium.com/itsoktomakemistakes/react-ref-api-%E6%80%8E%E9%BA%BC%E7%94%A8-ea1f31cd0a7a
 https://www.fooish.com/reactjs/refs.html
 
+# React 受控元件 (Controlled Components) -- React 稱有設定 value 屬性的表單元件叫做受控元件 (Controlled Components)
+https://www.fooish.com/reactjs/forms.html
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
