@@ -69,8 +69,8 @@ export default class MyShopComponent extends React.Component<any, any> {
         // console.log(`nextState = `, nextState);
         // console.log(`this.state = `, this.state);
 
-        console.log(`%cJSON.stringify(nextState) = `, "color:purple", JSON.stringify(nextState));
-        console.log(`%cJSON.stringify(this.state) = `, "color:orange", JSON.stringify(this.state));
+        console.log(`%cshouldComponentUpdate JSON.stringify(nextState) = `, "color:lightpink", JSON.stringify(nextState));
+        console.log(`%cshouldComponentUpdate JSON.stringify(this.state) = `, "color:orange", JSON.stringify(this.state));
 
         // 利用 JSON.stringify 判斷前後資料是否相等
         if (JSON.stringify(nextState) === JSON.stringify(this.state)) {
@@ -182,36 +182,6 @@ export default class MyShopComponent extends React.Component<any, any> {
                         // "products": this.state.products.filter((item: ProductVO) => { return item.id != productId })
                         "products": this.state.products.filter((item: ProductVO) => item.id !== productId)
                     });
-                    
-                }
-            }).catch((err) => {
-                console.error("err = ", err);
-                alert("ERROR!");
-            });
-    }
-
-    /**
-    * 刪除商品 - 透過 props 傳給 <MyItem> 元件
-    * 說明: dataFromChild : 子元件 emit 過來的資料
-    */
-    doDeleteFromChild = (dataFromChild: any) => {
-        alert(" === doDeleteFromChild === ");
-        console.log("doDeleteFromChild dataFromChild is: ", dataFromChild);
-
-        let productWantToDelete = dataFromChild.itemWantToDelete;
-
-        let fetchUrl = `http://localhost:3007/products/${productWantToDelete.id}`;
-        fetch(fetchUrl, { method: 'DELETE' })
-            .then((res) => {
-                if (res.status === 200 && res.ok === true) {
-                    alert('DELETE SUCCESS!');
-
-                    // 異動 state → 觸發 Render
-                    this.setState({
-                        "products": this.state.products.filter((prodVO: ProductVO) => {
-                            return prodVO.id != dataFromChild.itemWantToDelete.id
-                        })
-                    });
 
                 }
             }).catch((err) => {
@@ -260,7 +230,7 @@ export default class MyShopComponent extends React.Component<any, any> {
     updateHandler = (e: ChangeEvent) => {
         let targetInputTag = e.target as HTMLInputElement;
         console.log("targetInputTag >>> ", targetInputTag);
-
+        console.log("(1. updateHandler) this.state.products >>>", this.state.products);
         switch (targetInputTag.name) {
             case "productName":
                 this.setState({
@@ -296,7 +266,8 @@ export default class MyShopComponent extends React.Component<any, any> {
 
         // 延遲一下，避免 setState 非同步造成console.log無法正確顯示
         setTimeout(() => {
-            console.log("### updateHandler ###", this.state.selectedProdVO);
+            console.log("### updateHandler this.state ###", this.state);
+            console.log("(2. updateHandler) this.state.products >>>", this.state.products);
         }, 200)
 
     }
@@ -307,7 +278,6 @@ export default class MyShopComponent extends React.Component<any, any> {
     doUpdateStep2 = (e: MouseEvent<HTMLButtonElement>) => {
         // alert("doUpdateStep2");
         // console.log("doUpdateStep2 event >>>", e);
-
 
         console.log("doUpdateStep2 >>> ", this.state.selectedProdVO); // 可以這樣取得要更新的資料，此處故意練習使用 Ref 抓 DOM
 
@@ -340,41 +310,40 @@ export default class MyShopComponent extends React.Component<any, any> {
             .then((res: Response) => {
                 if (res.status === 200 && res.ok === true) {
                     alert('PATCH SUCCESS!');
-
-                    let productArrAfterUpdate = this.state.products.map((prodVO: ProductVO) => {
-                        if (prodVO.id === pId) {
-                            prodVO.productName = pName;
-                            prodVO.price = pPrice;
-                            prodVO.quantity = pQuantity;
-                        }
-                        return prodVO;
-                    });
-                    console.log("用map修改物件屬性後 [...this.state.products] >>>", [...this.state.products]);
-
-                    // 觸發 Re-Render
-                    this.setState({
-                        "products": productArrAfterUpdate,
-                        "selectedProdVO": { // 更新用的 → 復原
-                            "id": '',
-                            "productName": "",
-                            "price": "",
-                            "quantity": "",
-                        },
-                    });
-
                     return res.json(); // 返回 Promise，resolves 是 JSON 物件
                 }
             })
             .then(json => {
                 console.log("After Patch : ", json);
 
-                this.isUpdateBlockShow = false; // 隱藏 更新區塊
+                // 觸發 Re-Render
+                // ref. https://stackoverflow.com/questions/43638938/updating-an-object-with-setstate-in-react/43639228
+                // ref. https://stackoverflow.com/questions/49477547/setstate-of-an-array-of-objects-in-react/49477641
+                this.setState((prevState: any) => ({
+                    "selectedProdVO": { // 更新用的 → 復原
+                        "id": '',
+                        "productName": "",
+                        "price": "",
+                        "quantity": "",
+                     },
+                    "products": prevState.products.map((pVO: ProductVO) => {
+                        console.log("GGG ", pVO.id == json.id);
+                        return pVO.id == json.id ? { ...pVO, quantity: json.quantity } : pVO; // 使用解構運算子( 2- Using spread operator )
+                    })
+
+                }), () => {
+                    // setState 第2個參數→避免確保下面的CODE在 setState 確實完成後才執行
+                    console.log("After Patch setState →  : ", this.state.selectedProdVO);
+                    // --------------------------------------------------
+                    this.isUpdateBlockShow = false; // 隱藏 更新區塊
+                    this.forceUpdate(); // 因為 isUpdateBlockShow 是 物件自己的 private 屬性, 不受生命週期控管 → 需手動update
+                });
 
             }).catch((err) => {
                 console.error("err = ", err);
                 alert("ERROR!");
             }).finally(() => {
-                this.forceUpdate(); // 無效!!!
+                // this.forceUpdate(); // 無效!!!
             });
 
     }
@@ -418,9 +387,75 @@ export default class MyShopComponent extends React.Component<any, any> {
         // console.log("this.state.dataForInsert OBJECT : ", this.state.dataForInsert);
     }
 
+    /////////////////////////////////////////////
+    ///////////////  子傳父 用的 /////////////////
+    /////////////////////////////////////////////
+    /**
+    * 刪除商品 - 透過 props 傳給 <MyItem> 元件
+    * 說明: dataFromChild : 子元件 emit 過來的資料
+    */
+    doDeleteFromChild = (dataFromChild: any) => {
+        let productWantToDelete = dataFromChild.itemWantToDelete;
+        let confirmStatus = window.confirm(`確定要刪除商品編號 ${productWantToDelete} 嗎?`);
+        
+        console.log("doDeleteFromChild dataFromChild is: ", dataFromChild);
+        let fetchUrl = `http://localhost:3007/products/${productWantToDelete.id}`;
+        fetch(fetchUrl, { method: 'DELETE' })
+            .then((res) => {
+                if (res.status === 200 && res.ok === true) {
+                    alert('DELETE SUCCESS!');
+
+                    // 異動 state → 觸發 Render
+                    this.setState({
+                        "products": this.state.products.filter((prodVO: ProductVO) => {
+                            return prodVO.id != dataFromChild.itemWantToDelete.id
+                        })
+                    });
+
+                }
+            }).catch((err) => {
+                console.error("err = ", err);
+                alert("ERROR!");
+            });
+    }
+
+    /**
+    * Show更新Block - 透過 props 傳給 <MyItem> 元件
+    * 說明: dataFromChild : 子元件 emit 過來的資料
+    */
+    doUpdateFromChild = (dataFromChild: any) => {
+        alert(" === doUpdateFromChild === ");
+        console.log("doUpdateFromChild dataFromChild is: ", dataFromChild);
+
+        let { showStatus, itemWantToUpdate } = dataFromChild; // 解構
+        console.log("doUpdateFromChild showStatus >>> ", showStatus);
+        console.log("doUpdateFromChild itemWantToUpdate >>> ", itemWantToUpdate);
+
+        this.setState({
+            "selectedProdVO": { // 更新用的
+                "id": itemWantToUpdate['id'],
+                "productName": itemWantToUpdate['productName'],
+                "price": itemWantToUpdate['price'],
+                "quantity": itemWantToUpdate['quantity'],
+            },
+        }, () => {
+            // 避免setState非同步無法正確印出資料，將console.log寫在第2個參數
+            console.log("1. this.state.products ", this.state.products);
+            console.log("2. this.state.selectedProdVO ", this.state.selectedProdVO);
+            this.isUpdateBlockShow = showStatus; // 顯示 更新區塊
+            this.forceUpdate(); // 使用 class level 的變數 → 不會觸發Re-Render，必須強制刷新
+        });
+
+    }
+    /////////////////////////////////////////////
+
     render(): any {
-        let myDataBlock = undefined;
-        if (this.state?.products === undefined) {
+
+        { console.log("%c%s", "color:red" , "MyShopComponent render() be called") }
+
+        let myDataBlock = null;
+
+        if (this.state?.products.length === 0) {
             // loading 畫面
             myDataBlock = <img src={dataLoadingPic3} alt="dataLoadingPic3.gif" width="200px" style={{ margin: "2cm" }}></img>
         } else {
@@ -509,12 +544,14 @@ export default class MyShopComponent extends React.Component<any, any> {
                             </tr>
                         </thead>
                         <tbody>
+                            { console.log(`%cMyShopComponent this.state?.products >>>`, "color:red", this.state?.products) }
                             {
                                 this.state?.products.map((prodVO: ProductVO, idx: number) => {
 
                                     return (
-                                        <MyItem productData={{ idx, ...prodVO }}
+                                        <MyItem key={prodVO.id} productData={{ idx, ...prodVO }}
                                             doDeleteFromChildProps={(dataFromChild: any) => this.doDeleteFromChild(dataFromChild)}
+                                            doShowUpdateBlockFromChildProps={(dataFromChild: any) => this.doUpdateFromChild(dataFromChild)}
                                         />
                                     );
 
