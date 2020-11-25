@@ -39,6 +39,18 @@ https://www.fooish.com/reactjs/refs.html
 # React 受控元件 (Controlled Components) -- React 稱有設定 value 屬性的表單元件叫做受控元件 (Controlled Components)
 https://www.fooish.com/reactjs/forms.html
 
+# Day15 / Redux -- MapStateToProps & MapDispatchToProps & Connect
+https://ithelp.ithome.com.tw/articles/10186006
+
+# react-router-redux 介紹
+https://medium.com/@slashtu/react-router-redux-62872860e8a
+
+# redux+react-redux实现购物流程
+https://qfdeu.blog.csdn.net/article/details/108580517
+
+# React实现购物车基本功能（React-redux）
+https://blog.csdn.net/Vue2018/article/details/101214267
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
