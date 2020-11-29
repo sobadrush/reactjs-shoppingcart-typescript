@@ -29,6 +29,11 @@ export default class MyShopComponent extends React.Component<any, any> {
     private inputProdPriceRef: React.RefObject<any>;
     private inputProdQuantityRef: React.RefObject<any>;
 
+    // 查詢時的參數
+    private queryInputProdId: any;
+    private queryInputProdName: any;
+    private queryInputProdQuantity: any;
+
     constructor(props: any) {
         super(props);
 
@@ -138,9 +143,32 @@ export default class MyShopComponent extends React.Component<any, any> {
      */
     doQuery = (e?: MouseEvent<HTMLButtonElement>) => {
         // alert("doQuery");
+        // --------------------------------------
         console.log("doQuery event >>>", e);
         // --------------------------------------
+        let queryInputProdIdVal = this.queryInputProdId?.value === undefined ? '' : this.queryInputProdId?.value;
+        let queryInputProdNameVal = this.queryInputProdName?.value === undefined ? '' : this.queryInputProdName?.value;
+        let queryInputProdQuantityVal = this.queryInputProdQuantity?.value === undefined ? '' : this.queryInputProdQuantity?.value;
+        console.log("doQuery - queryInputProdId.value >>> ", queryInputProdIdVal);
+        console.log("doQuery - queryInputProdName.value >>> ", queryInputProdNameVal);
+        console.log("doQuery - queryInputProdQuantity.value >>> ", queryInputProdQuantityVal);
+        // --------------------------------------
         let fetchUrl = `http://localhost:3007/products`;
+
+        if (queryInputProdIdVal !== '' || queryInputProdNameVal !== '' || queryInputProdQuantityVal !== '') {
+            fetchUrl += "?";
+            if (queryInputProdIdVal !== '') {
+                fetchUrl += `id=${queryInputProdIdVal}`;
+            }
+            if (queryInputProdNameVal !== '') {
+                fetchUrl += `productName_like=${queryInputProdNameVal}`; // 模糊查詢 (商品名稱LIKE)
+            }
+            if (queryInputProdQuantityVal !== '') {
+                fetchUrl += `quantity_gte=${queryInputProdQuantityVal}`; // gte: greater than / lte: less than
+            }
+        }
+        console.log('fetchUrl = ', fetchUrl);
+
         fetch(fetchUrl, { method: 'GET' })
             .then((res) => {
                 if (!res.ok) {
@@ -198,7 +226,7 @@ export default class MyShopComponent extends React.Component<any, any> {
         // --------------------------------------------------------------------------
         // find : 回傳第一個滿足條件的物件
         let theSelectedProdVO = this.state.products.find((prodVO: ProductVO) => {
-            return prodVO.id == productId;
+            return prodVO.id === productId;
         });
         // console.log("theSelectedProdVO >>>", theSelectedProdVO);
 
@@ -293,7 +321,7 @@ export default class MyShopComponent extends React.Component<any, any> {
 
         console.log("[pId, pName, pPrice, pQuantity] = ", [pId, pName, pPrice, pQuantity]);
 
-        if (window.confirm(`確定更新商品編號(${pId})嗎?`) == false) return;
+        if (window.confirm(`確定更新商品編號(${pId})嗎?`) === false) return;
 
         let fetchUrl = `http://localhost:3007/products/${pId}`;
         fetch(fetchUrl, {
@@ -325,10 +353,10 @@ export default class MyShopComponent extends React.Component<any, any> {
                         "productName": "",
                         "price": "",
                         "quantity": "",
-                     },
+                    },
                     "products": prevState.products.map((pVO: ProductVO) => {
-                        console.log("GGG ", pVO.id == json.id);
-                        return pVO.id == json.id ? { ...pVO, quantity: json.quantity } : pVO; // 使用解構運算子( 2- Using spread operator )
+                        console.log("GGG ", pVO.id === json.id);
+                        return pVO.id === json.id ? { ...pVO, quantity: json.quantity } : pVO; // 使用解構運算子( 2- Using spread operator )
                     })
 
                 }), () => {
@@ -397,7 +425,11 @@ export default class MyShopComponent extends React.Component<any, any> {
     doDeleteFromChild = (dataFromChild: any) => {
         let productWantToDelete = dataFromChild.itemWantToDelete;
         let confirmStatus = window.confirm(`確定要刪除商品編號 ${productWantToDelete} 嗎?`);
-        
+
+        if (confirmStatus === false) {
+            return;
+        }
+
         console.log("doDeleteFromChild dataFromChild is: ", dataFromChild);
         let fetchUrl = `http://localhost:3007/products/${productWantToDelete.id}`;
         fetch(fetchUrl, { method: 'DELETE' })
@@ -408,7 +440,7 @@ export default class MyShopComponent extends React.Component<any, any> {
                     // 異動 state → 觸發 Render
                     this.setState({
                         "products": this.state.products.filter((prodVO: ProductVO) => {
-                            return prodVO.id != dataFromChild.itemWantToDelete.id
+                            return prodVO.id !== dataFromChild.itemWantToDelete.id
                         })
                     });
 
@@ -451,7 +483,7 @@ export default class MyShopComponent extends React.Component<any, any> {
 
     render(): any {
 
-        { console.log("%c%s", "color:red" , "MyShopComponent render() be called") }
+        { console.log("%c%s", "color:red", "MyShopComponent render() be called") }
 
         let myDataBlock = null;
 
@@ -526,7 +558,12 @@ export default class MyShopComponent extends React.Component<any, any> {
                         </div>
                     }
 
-                    <div style={{ margin: '3px', float: 'right' }} >
+                    <div style={{ margin: '3px', float: 'right', border: '1px solid black' }} >
+                        <h3 style={{ fontWeight: "bolder" }}>查詢條件</h3>
+                        商品編號: <input type="text" name="queryInputProdId" ref={(thisInput) => { this.queryInputProdId = thisInput; }} /> <br />
+                        商品名稱(LIKE): <input type="text" name="queryInputProdName" ref={(thisInput) => { this.queryInputProdName = thisInput; }} /> <br />
+                        商品庫存(GTE): <input type="text" name="queryInputProdQuantity" ref={(thisInput) => { this.queryInputProdQuantity = thisInput; }} /> <br />
+
                         <button type="button" className="btn btn-primary"
                             style={{ margin: '3px', float: 'right', width: '3cm', height: '3cm' }}
                             onClick={(e) => { this.doQuery(e) }}>查詢</button>
@@ -544,7 +581,7 @@ export default class MyShopComponent extends React.Component<any, any> {
                             </tr>
                         </thead>
                         <tbody>
-                            { console.log(`%cMyShopComponent this.state?.products >>>`, "color:red", this.state?.products) }
+                            {console.log(`%cMyShopComponent this.state?.products >>>`, "color:red", this.state?.products)}
                             {
                                 this.state?.products.map((prodVO: ProductVO, idx: number) => {
 

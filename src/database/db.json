@@ -29,6 +29,12 @@
         "productName": "刺客教條奧德賽",
         "price": 1079,
         "quantity": 9
+      },
+      {
+        "id": 7006,
+        "productName": "聖劍傳說1",
+        "price": 999,
+        "quantity": 20
       }
     ]
   }
